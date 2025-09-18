@@ -1,83 +1,72 @@
 import Spinner from "../spinner/Spinner";
 import PropTypes from "prop-types";
-import MarvelService from "../../services/MarvelService";
+import useMarvelService from "../../services/MarvelService";
 import "./charList.scss";
 import ErrorMessage from "../errorMessage/ErrorMessage";
+import { TransitionGroup, Transition } from "react-transition-group";
+import { React, useEffect, useState, useRef } from "react";
 
-import { Component } from "react";
+const CharList = (props) => {
+  const [chars, setChars] = useState([]);
+  const [firstLoading, setFirstLoading] = useState(true);
+  const [offset, setOffset] = useState(0);
+  const [newItemLoading, setNewItemLoading] = useState(false);
+  const [charEnded, setCharEnded] = useState(false);
 
-class CharList extends Component {
-  state = {
-    chars: [],
-    loading: true,
-    error: false,
-    offset: 0,
-    newItemLoading: false,
-    charEnded: false,
+  const { loading, error, clearError, getAllCharacters } = useMarvelService();
+
+  useEffect(() => {
+    updateCharList();
+  }, []);
+
+  const onNewItemLoading = () => {
+    setNewItemLoading(true);
   };
 
-  marvelService = new MarvelService();
+  const updateCharList = (offset) => {
+    onNewItemLoading();
+    clearError();
 
-  componentDidMount() {
-    this.onCharLoading();
-    this.updateCharList();
-  }
+    getAllCharacters(offset).then(onCharLoadedList);
+  };
 
-  onCharLoading = () => {
-    this.setState({
-      loading: true,
+  const onCharLoadedList = (newChars) => {
+    setChars((chars) => {
+      return [...chars, ...newChars];
     });
+
+    setOffset((offset) => {
+      return offset + 9;
+    });
+    setNewItemLoading(false);
+    setCharEnded(newChars.length < 9);
+    if (chars) {
+      setFirstLoading(false);
+    }
   };
 
-  onNewItemLoading = () => {
-    this.setState({ newItemLoading: true });
-  };
+  const { onSelectedChar, selectedId } = props;
 
-  updateCharList = (offset) => {
-    this.onNewItemLoading();
+  const spinner = loading && firstLoading ? <Spinner /> : null;
+  const errorMessage = error ? <ErrorMessage /> : null;
+  const containt = !error && (
+    <ViewList
+      charEnded={charEnded}
+      newItemLoading={newItemLoading}
+      offset={offset}
+      updateCharList={updateCharList}
+      onSelectedChar={onSelectedChar}
+      chars={chars}
+      selectedId={selectedId}
+    />
+  );
 
-    this.marvelService.getAllCharacters(offset).then(this.onCharLoadedList);
-  };
-
-  onCharLoadedList = (newChars) => {
-    this.setState(({ chars, offset }) => ({
-      chars: [...chars, ...newChars],
-      loading: false,
-      offset: offset + 9,
-      newItemLoading: false,
-      charEnded: newChars.length < 9,
-    }));
-  };
-
-  onErrorList = () => {
-    this.setState({ loading: false, error: true });
-  };
-
-  render() {
-    const { onSelectedChar, selectedId } = this.props;
-
-    const { loading, error, chars } = this.state;
-    const spinner = loading ? <Spinner /> : null;
-    const errorMessage = error ? <ErrorMessage /> : null;
-    const containt = !(loading || error) ? (
-      <ViewList
-        charEnded={this.state.charEnded}
-        newItemLoading={this.state.newItemLoading}
-        offset={this.state.offset}
-        updateCharList={this.updateCharList}
-        onSelectedChar={onSelectedChar}
-        chars={chars}
-        selectedId={selectedId}
-      />
-    ) : null;
-
-    return (
-      <>
-        {spinner} {errorMessage} {containt}
-      </>
-    );
-  }
-}
+  return (
+    <>
+      {spinner} {errorMessage} {containt}
+    </>
+  );
+};
 
 const ViewList = ({
   charEnded,
@@ -88,29 +77,63 @@ const ViewList = ({
   updateCharList,
   selectedId,
 }) => {
+  const defaultStyle = {
+    transition: "all 600ms ease-in-out",
+  };
+  const transitionStyles = {
+    entering: { opacity: 0, transform: "translateY(20px)" },
+    entered: { opacity: 1, transform: "translateY(0)" },
+    exiting: { opacity: 0, transform: "translateY(-20px)" },
+    exited: { opacity: 0, transform: "translateY(-20px)" },
+  };
+  const refs = useRef({});
+  if (chars.length === 0) return;
   return (
     <div className="char__list">
       <ul className="char__grid">
-        {chars.map((char) => (
-          <li
-            key={char.id}
-            className={`char__item ${
-              selectedId && selectedId === char.id ? "char__item_selected" : ""
-            }`}
-            onClick={() => onSelectedChar(char.id)}
-          >
-            <img
-              src={char.thumbnail}
-              alt="abyss"
-              style={{
-                objectFit: char.thumbnail.includes("image_not_availab")
-                  ? "fill"
-                  : "cover",
-              }}
-            />
-            <div className="char__name">{char.name}</div>
-          </li>
-        ))}
+        <TransitionGroup component={null}>
+          {chars.map((char) => {
+            if (!refs.current[char.id]) {
+              refs.current[char.id] = { current: null };
+            }
+            const nodeRef = refs.current[char.id];
+            return (
+              <Transition
+                key={char.id}
+                nodeRef={nodeRef}
+                timeout={300}
+                appear={true}
+              >
+                {(state) => (
+                  <li
+                    className={`char__item ${
+                      selectedId && selectedId === char.id
+                        ? "char__item_selected"
+                        : ""
+                    }`}
+                    onClick={() => onSelectedChar(char.id)}
+                    ref={nodeRef}
+                    style={{
+                      ...defaultStyle,
+                      ...transitionStyles[state],
+                    }}
+                  >
+                    <img
+                      src={char.thumbnail}
+                      alt="abyss"
+                      style={{
+                        objectFit: char.thumbnail.includes("image_not_availab")
+                          ? "fill"
+                          : "cover",
+                      }}
+                    />
+                    <div className="char__name">{char.name}</div>
+                  </li>
+                )}
+              </Transition>
+            );
+          })}
+        </TransitionGroup>
       </ul>
 
       <button
