@@ -1,7 +1,6 @@
 {
   "name": "marvel",
   "version": "0.1.0",
-  "homepage": "https://malygina777.github.io/Marvel",
   "private": true,
   "proxy": "https://marvel-server-zeta.vercel.app",
   "dependencies": {
