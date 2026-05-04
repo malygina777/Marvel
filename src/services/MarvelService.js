@@ -3,25 +3,25 @@ import useHttp from "./https.js";
 const useMarvelService = () => {
   const { loading, request, error, clearError } = useHttp();
 
-  // const _apiBase = "https://marvel-server-zeta.vercel.app/";
+  const _apiBase = "https://marvel-server-zeta.vercel.app/";
   const _publicKey = "d4eecb0c66dedbfae4eab45d312fc1df";
   const _offsetdefault = 0;
 
   const getAllCharacters = async (offset = _offsetdefault) => {
     const res = await request(
-      `/characters?limit=9&offset=${offset}&apikey=${_publicKey}`
+      `${_apiBase}/characters?limit=9&offset=${offset}&apikey=${_publicKey}`
     );
     return res.data.results.map(_transformCharacter);
   };
 
   const getCharacter = async (id) => {
-    const res = await request(`/characters/${id}?apikey=${_publicKey}`);
+    const res = await request(`${_apiBase}/characters/${id}?apikey=${_publicKey}`);
     return _transformCharacter(res.data.results[0]);
   };
 
   const getAllComics = async (offset = _offsetdefault) => {
     const res = await fetch(
-      `/comics?limit=8&offset=${offset}&apikey=${_publicKey}`
+      `${_apiBase}/comics?limit=8&offset=${offset}&apikey=${_publicKey}`
     );
     const data = await res.json();
 
@@ -29,13 +29,13 @@ const useMarvelService = () => {
   };
 
   const getComic = async (id) => {
-    const res = await request(`/comics/${id}?apikey=${_publicKey}`);
+    const res = await request(`${_apiBase}/comics/${id}?apikey=${_publicKey}`);
 
     return _transformComics(res.data.results[0]);
   };
 
   const getNameChar = async (name) => {
-    const res = await request(`/characters?apikey=${_publicKey}`);
+    const res = await request(`${_apiBase}/characters?apikey=${_publicKey}`);
 
     const nameNormalized = name.trim().toLowerCase();
     const character = res.data.results.find(
