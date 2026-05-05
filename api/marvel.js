@@ -1,10 +1,12 @@
 
 
 export default async function handler(req, res) {
-  const { path = "" } = req.query;
+  const { path = "", ...params } = req.query;
+
+  const query = new URLSearchParams(params).toString();
 
   const response = await fetch(
-  `https://marvel-server-zeta.vercel.app/${path}`
+   `https://marvel-server-zeta.vercel.app/${path}?${query}`
   );
 
   const data = await response.json();
