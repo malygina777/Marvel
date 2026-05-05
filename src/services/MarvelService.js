@@ -9,19 +9,19 @@ const useMarvelService = () => {
 
   const getAllCharacters = async (offset = _offsetdefault) => {
     const res = await request(
-      `api/marvel?path=characters&limit=9&offset=${offset}&apikey=${_publicKey}`
+      `/api/marvel?path=characters&limit=9&offset=${offset}&apikey=${_publicKey}`
     );
     return res.data.results.map(_transformCharacter);
   };
 
   const getCharacter = async (id) => {
-    const res = await request(`api/marvel?path=characters/${id}&apikey=${_publicKey}`);
+    const res = await request(`/api/marvel?path=characters/${id}&apikey=${_publicKey}`);
     return _transformCharacter(res.data.results[0]);
   };
 
   const getAllComics = async (offset = _offsetdefault) => {
     const res = await fetch(
-      `api/marvel?path=comics&limit=8&offset=${offset}&apikey=${_publicKey}`
+      `/api/marvel?path=comics&limit=8&offset=${offset}&apikey=${_publicKey}`
     );
     const data = await res.json();
 
@@ -29,13 +29,13 @@ const useMarvelService = () => {
   };
 
   const getComic = async (id) => {
-    const res = await request(`api/marvel?path=comics/${id}&apikey=${_publicKey}`);
+    const res = await request(`/api/marvel?path=comics/${id}&apikey=${_publicKey}`);
 
     return _transformComics(res.data.results[0]);
   };
 
   const getNameChar = async (name) => {
-    const res = await request(`api/marvel?path=characters&apikey=${_publicKey}`);
+    const res = await request(`/api/marvel?path=characters&apikey=${_publicKey}`);
 
     const nameNormalized = name.trim().toLowerCase();
     const character = res.data.results.find(
